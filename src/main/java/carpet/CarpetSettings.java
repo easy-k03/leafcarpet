@@ -53,7 +53,7 @@ import static carpet.api.settings.RuleCategory.CLIENT;
 @SuppressWarnings({"CanBeFinal", "removal"})
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.194";
+    public static final String carpetVersion = "1.0.0";
     public static final int [] releaseTarget = {1, 21};
     public static final Logger LOG = LoggerFactory.getLogger("carpet");
     public static final ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);

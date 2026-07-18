@@ -49,7 +49,7 @@ public class CarpetServer
 
     public static void onGameStarted()
     {
-        settingsManager = new carpet.settings.SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
+        settingsManager = new carpet.settings.SettingsManager(CarpetSettings.carpetVersion, "carpet", "CarpetPlugin");
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
         CarpetScriptServer.parseFunctionClasses();

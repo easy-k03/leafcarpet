@@ -1,12 +1,15 @@
 package carpet.patches;
 
 import carpet.CarpetSettings;
+import carpet.helpers.EntityPlayerActionPack;
 import carpet.utils.Messenger;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacket;
@@ -55,9 +58,14 @@ public class EntityPlayerMPFake extends ServerPlayer
         server.services().nameToIdCache().resolveOfflineUsers(false);
         GameProfile gameprofile;
 
-        UUID uuid = OldUsersConverter.convertMobOwnerIfNecessary(server, username);
-        if (uuid == null && CarpetSettings.allowSpawningOfflinePlayers) {
-            server.services().nameToIdCache().resolveOfflineUsers(server.isDedicatedServer() && server.usesAuthentication());
+        UUID uuid;
+        if (server.usesAuthentication()) {
+            uuid = OldUsersConverter.convertMobOwnerIfNecessary(server, username);
+            if (uuid == null && CarpetSettings.allowSpawningOfflinePlayers) {
+                server.services().nameToIdCache().resolveOfflineUsers(server.isDedicatedServer() && server.usesAuthentication());
+                uuid = UUIDUtil.createOfflinePlayerUUID(username);
+            }
+        } else {
             uuid = UUIDUtil.createOfflinePlayerUUID(username);
         }
         if (uuid == null) {
@@ -135,6 +143,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         {
             super.tick();
             this.doTick();
+            EntityPlayerActionPack.get(this).onUpdate();
         }
         catch (NullPointerException ignored)
         {
@@ -243,6 +252,11 @@ public class EntityPlayerMPFake extends ServerPlayer
 
     private static void loadPlayerData(EntityPlayerMPFake player)
     {
-        // Skip player data loading for now - fake players start fresh
+        MinecraftServer server = player.level().getServer();
+        if (server != null) {
+            server.getPlayerList().loadPlayerData(player.nameAndId()).ifPresent(tag ->
+                player.readAdditionalSaveData(TagValueInput.createGlobal(ProblemReporter.DISCARDING, tag))
+            );
+        }
     }
 }

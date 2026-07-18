@@ -25,7 +25,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import carpet.LeafCarpetPlugin;
+import carpet.CarpetPlugin;
 import carpet.script.Expression;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
@@ -312,7 +312,7 @@ public class SettingsManager {
 
     private Path getFile()
     {
-        return new java.io.File(LeafCarpetPlugin.pluginInstance.getDataFolder(), identifier + ".conf").toPath();
+        return new java.io.File(CarpetPlugin.pluginInstance.getDataFolder(), identifier + ".conf").toPath();
     }
     
     private Collection<CarpetRule<?>> getRulesSorted()

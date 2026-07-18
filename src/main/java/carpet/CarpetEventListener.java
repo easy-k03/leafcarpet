@@ -22,9 +22,9 @@ import org.bukkit.event.weather.LightningStrikeEvent;
 
 public class CarpetEventListener implements Listener
 {
-    private final LeafCarpetPlugin plugin;
+    private final CarpetPlugin plugin;
 
-    public CarpetEventListener(LeafCarpetPlugin plugin)
+    public CarpetEventListener(CarpetPlugin plugin)
     {
         this.plugin = plugin;
     }

@@ -14,9 +14,9 @@ import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class LeafCarpetPlugin extends JavaPlugin implements Listener
+public class CarpetPlugin extends JavaPlugin implements Listener
 {
-    public static LeafCarpetPlugin pluginInstance;
+    public static CarpetPlugin pluginInstance;
 
     private boolean serverLoadComplete;
     private boolean worldsLoaded;

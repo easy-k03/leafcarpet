@@ -1,0 +1,8 @@
+name: LeafCarpet
+version: "${projectVersion}"
+main: carpet.LeafCarpetPlugin
+api-version: "1.21"
+authors: [gnembon, leafcarpet]
+description: Carpet Mod ported to LeafMC
+website: https://github.com/gnembon/fabric-carpet
+load: STARTUP

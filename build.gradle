@@ -1,0 +1,42 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '9.0.0-beta8'
+}
+
+group = 'carpet'
+version = '1.4.194'
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    flatDir { dirs 'libs' }
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
+    compileOnly name: 'paper-server'
+    compileOnly 'com.mojang:brigadier:1.0.18'
+    compileOnly 'com.mojang:authlib:3.18.38'
+    compileOnly 'com.mojang:datafixerupper:6.0.8'
+    compileOnly 'io.netty:netty-buffer:4.1.97.Final'
+    compileOnly 'io.netty:netty-transport:4.1.97.Final'
+    compileOnly 'org.jspecify:jspecify:1.0.0'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+processResources {
+    filesMatching('plugin.yml') {
+        expand projectVersion: project.version
+    }
+}
+
+shadowJar {
+    archiveClassifier = ''
+    exclude 'META-INF/**'
+}
+
+build.dependsOn shadowJar

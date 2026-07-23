@@ -1,5 +1,6 @@
 package carpet.patches;
 
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.network.Connection;
@@ -14,11 +15,7 @@ public class FakeClientConnection extends Connection
     public FakeClientConnection(PacketFlow p)
     {
         super(p);
-        try {
-            java.lang.reflect.Field channelField = Connection.class.getDeclaredField("channel");
-            channelField.setAccessible(true);
-            channelField.set(this, new EmbeddedChannel());
-        } catch (Exception ignored) {}
+        this.channel = new EmbeddedChannel();
     }
 
     @Override
@@ -29,16 +26,12 @@ public class FakeClientConnection extends Connection
     @Override
     public void send(Packet<?> packet, @Nullable ChannelFutureListener listener, boolean bl)
     {
-    }
-
-    @Override
-    public void handleDisconnection()
-    {
-    }
-
-    @Override
-    public void setListenerForServerboundHandshake(PacketListener packetListener)
-    {
+        if (listener != null) {
+            try {
+                ChannelFuture future = this.channel.newSucceededFuture();
+                listener.operationComplete(future);
+            } catch (Exception ignored) {}
+        }
     }
 
     @Override

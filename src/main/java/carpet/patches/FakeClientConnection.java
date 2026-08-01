@@ -2,6 +2,9 @@ package carpet.patches;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketListener;
@@ -10,12 +13,22 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
 import org.jspecify.annotations.Nullable;
 
+import java.net.InetSocketAddress;
+
 public class FakeClientConnection extends Connection
 {
     public FakeClientConnection(PacketFlow p)
     {
         super(p);
         this.channel = new EmbeddedChannel();
+        this.address = new InetSocketAddress("127.0.0.1", 0);
+        this.channel.pipeline().addLast("decoder", new ChannelInboundHandlerAdapter() {});
+        this.channel.pipeline().addLast("encoder", new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext ctx, Object msg, io.netty.channel.ChannelPromise promise) {
+                promise.setSuccess();
+            }
+        });
     }
 
     @Override

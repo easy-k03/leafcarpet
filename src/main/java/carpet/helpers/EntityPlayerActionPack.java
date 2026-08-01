@@ -243,6 +243,13 @@ public class EntityPlayerActionPack
                 }
             }
         }
+        // Re-apply sneaking and sprinting state each tick so it sticks
+        if (sneaking) {
+            player.setShiftKeyDown(true);
+        }
+        if (sprinting) {
+            player.setSprinting(true);
+        }
         float vel = sneaking?0.3F:1.0F;
         // The != 0.0F checks are needed given else real players can't control minecarts, however it works with fakes and else they don't stop immediately
         if (forward != 0.0F) {
@@ -273,7 +280,7 @@ public class EntityPlayerActionPack
         Inventory inv = player.getInventory(); // getInventory;
         if (selectedSlot == -2) // all
         {
-            for (int i = inv.getContainerSize(); i >= 0; i--)
+            for (int i = inv.getContainerSize() - 1; i >= 0; i--)
                 dropItemFromSlot(i, dropAll);
         }
         else // one slot
@@ -368,7 +375,10 @@ public class EntityPlayerActionPack
             {
                 EntityPlayerActionPack ap = EntityPlayerActionPack.get(player);
                 ap.itemUseCooldown = 0;
-                player.releaseUsingItem();
+                if (action != null)
+                {
+                    player.releaseUsingItem();
+                }
             }
         },
         ATTACK(true) {

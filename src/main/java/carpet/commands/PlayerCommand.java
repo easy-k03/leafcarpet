@@ -151,7 +151,7 @@ public class PlayerCommand
 
     private static boolean isFakePlayer(Player player)
     {
-        return false; // Fake player system not yet ported
+        return player instanceof EntityPlayerMPFake;
     }
 
     private static boolean cantManipulate(CommandContext<CommandSourceStack> context)

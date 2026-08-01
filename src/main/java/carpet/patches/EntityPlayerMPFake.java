@@ -8,13 +8,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.ProblemReporter;
-import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.ServerboundClientInformationPacket;
 import net.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
+import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -24,6 +24,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.players.OldUsersConverter;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -32,7 +34,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -42,7 +43,6 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("EntityConstructor")
 public class EntityPlayerMPFake extends ServerPlayer
@@ -73,30 +73,26 @@ public class EntityPlayerMPFake extends ServerPlayer
         }
         gameprofile = new GameProfile(uuid, username);
 
-        String name = username;
-        spawning.add(name);
-
-        fetchGameProfile(server, uuid).whenCompleteAsync((p, t) -> {
-            spawning.remove(name);
-            if (t != null) return;
-
-            GameProfile current = p;
-
-            EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, current, ClientInformation.createDefault(), false);
-            instance.fixStartingPosition = () -> instance.snapTo(pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
-            server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, new net.minecraft.server.network.CommonListenerCookie(current, 0, instance.clientInformation(), false, "", java.util.Collections.emptySet(), null));
-            loadPlayerData(instance);
+        spawning.add(username);
+        EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, ClientInformation.createDefault(), false);
+        instance.fixStartingPosition = () -> instance.snapTo(pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
+        instance.fixStartingPosition.run();
+        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, net.minecraft.server.network.CommonListenerCookie.createInitial(gameprofile, false));
+        spawning.remove(username);
+        loadPlayerData(instance);
+            instance.connection.handleClientInformation(new ServerboundClientInformationPacket(instance.clientInformation()));
             instance.stopRiding();
-            instance.teleportTo(worldIn, pos.x, pos.y, pos.z, Set.of(), (float) yaw, (float) pitch, true);
-            instance.setHealth(20.0F);
-            instance.unsetRemoved();
-            instance.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
-            instance.gameMode.changeGameModeForPlayer(gamemode);
-            server.getPlayerList().broadcastAll(new ClientboundRotateHeadPacket(instance, (byte) (instance.yHeadRot * 256 / 360)), dimensionId);
-            server.getPlayerList().broadcastAll(ClientboundEntityPositionSyncPacket.of(instance), dimensionId);
-            instance.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, (byte) 0x7f);
-            instance.getAbilities().flying = flying;
-        }, server);
+        instance.teleportTo(worldIn, pos.x, pos.y, pos.z, Set.of(), (float) yaw, (float) pitch, true);
+        instance.connection.handleAcceptTeleportPacket(new ServerboundAcceptTeleportationPacket(instance.getId()));
+        instance.setHealth(20.0F);
+        instance.unsetRemoved();
+        instance.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
+        instance.gameMode.changeGameModeForPlayer(gamemode);
+        server.getPlayerList().broadcastAll(new ClientboundRotateHeadPacket(instance, (byte) (instance.yHeadRot * 256 / 360)), dimensionId);
+        server.getPlayerList().broadcastAll(ClientboundEntityPositionSyncPacket.of(instance), dimensionId);
+        instance.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, (byte) 0x7f);
+        instance.getAbilities().flying = flying;
+
         return true;
     }
 
@@ -136,13 +132,18 @@ public class EntityPlayerMPFake extends ServerPlayer
     {
         if (this.level().getServer().getTickCount() % 10 == 0)
         {
-            this.connection.resetPosition();
             this.level().getChunkSource().move(this);
         }
         try
         {
             super.tick();
             this.doTick();
+        }
+        catch (NullPointerException ignored)
+        {
+        }
+        try
+        {
             EntityPlayerActionPack.get(this).onUpdate();
         }
         catch (NullPointerException ignored)
@@ -223,7 +224,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         GameProfile gameprofile = player.getGameProfile();
         EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, player.clientInformation(), true);
         playerShadow.setChatSession(player.getChatSession());
-        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow, new net.minecraft.server.network.CommonListenerCookie(gameprofile, 0, player.clientInformation(), true, "", java.util.Collections.emptySet(), null));
+        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow, net.minecraft.server.network.CommonListenerCookie.createInitial(gameprofile, true));
         loadPlayerData(playerShadow);
 
         playerShadow.setHealth(player.getHealth());
@@ -246,11 +247,6 @@ public class EntityPlayerMPFake extends ServerPlayer
     public static boolean isSpawningPlayer(String username)
     {
         return spawning.contains(username);
-    }
-
-    private static CompletableFuture<GameProfile> fetchGameProfile(MinecraftServer server, final UUID name) {
-        final ResolvableProfile resolvableProfile = ResolvableProfile.createUnresolved(name);
-        return resolvableProfile.resolveProfile(server.services().profileResolver());
     }
 
     private static void loadPlayerData(EntityPlayerMPFake player)

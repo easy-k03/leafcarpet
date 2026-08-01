@@ -100,7 +100,8 @@ public class Translations
 
     public static boolean isValidLanguage(String newValue)
     {
-        return true;
+        return Translations.class.getClassLoader().getResource(
+            String.format("assets/carpet/lang/%s.json", newValue)) != null;
     }
 
     private static final Map<String, String> FALLBACKS = new HashMap<>();

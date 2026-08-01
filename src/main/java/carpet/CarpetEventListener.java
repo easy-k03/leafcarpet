@@ -83,10 +83,6 @@ public class CarpetEventListener implements Listener
     {
         if (CarpetSettings.shulkerBoxStackSize <= 1) return;
 
-        net.minecraft.world.entity.item.ItemEntity entity =
-            PaperUtils.toServerPlayer(null) != null ?
-            null : null; // placeholder
-
         org.bukkit.inventory.ItemStack bukkitStack = event.getEntity().getItemStack();
         if (bukkitStack.getType().name().contains("SHULKER_BOX"))
         {

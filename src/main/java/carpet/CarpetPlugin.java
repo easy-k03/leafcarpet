@@ -1,5 +1,8 @@
 package carpet;
 
+import com.destroystokyo.paper.event.server.ServerTickEndEvent;
+import carpet.helpers.EntityPlayerActionPack;
+import carpet.patches.EntityPlayerMPFake;
 import carpet.utils.PaperUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -9,6 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.event.world.WorldLoadEvent;
@@ -58,12 +62,33 @@ public class CarpetPlugin extends JavaPlugin implements Listener
     }
 
     @EventHandler
+    public void onServerTickEnd(ServerTickEndEvent event)
+    {
+        MinecraftServer server = PaperUtils.getMinecraftServer();
+        if (server == null) return;
+        for (ServerPlayer player : server.getPlayerList().getPlayers())
+        {
+            if (player instanceof EntityPlayerMPFake) continue;
+            EntityPlayerActionPack.get(player).onUpdate();
+        }
+    }
+
+    @EventHandler
     public void onWorldLoad(WorldLoadEvent event)
     {
         if (worldsLoaded) return;
         worldsLoaded = true;
 
         CarpetServer.onServerLoadedWorlds(PaperUtils.getMinecraftServer());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onPlayerKick(PlayerKickEvent event)
+    {
+        ServerPlayer player = PaperUtils.toServerPlayer(event.getPlayer());
+        if (player instanceof EntityPlayerMPFake && event.getReason().contains("PacketEvents")) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

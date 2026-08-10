@@ -39,6 +39,11 @@ public class EntityPlayerActionPack
         return actionPacks.computeIfAbsent(player.getUUID(), k -> new EntityPlayerActionPack(player));
     }
 
+    public static void remove(ServerPlayer player)
+    {
+        actionPacks.remove(player.getUUID());
+    }
+
     private final ServerPlayer player;
 
     private final Map<ActionType, Action> actions = new EnumMap<>(ActionType.class);

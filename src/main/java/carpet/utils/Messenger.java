@@ -290,7 +290,10 @@ public class Messenger
     public static void print_server_message(MinecraftServer server, String message)
     {
         if (server == null)
+        {
             LOG.error("Message not delivered: "+message);
+            return;
+        }
         server.sendSystemMessage(Component.literal(message));
         Component txt = c("gi "+message);
         for (ServerPlayer entityplayer : server.getPlayerList().getPlayers())
@@ -301,7 +304,10 @@ public class Messenger
     public static void print_server_message(MinecraftServer server, Component message)
     {
         if (server == null)
+        {
             LOG.error("Message not delivered: "+message.getString());
+            return;
+        }
         server.sendSystemMessage(message);
         for (ServerPlayer entityplayer : server.getPlayerList().getPlayers())
         {

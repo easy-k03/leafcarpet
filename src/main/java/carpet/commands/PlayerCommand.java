@@ -58,10 +58,8 @@ public class PlayerCommand
                         .then(makeActionCommand("use", ActionType.USE))
                         .then(makeActionCommand("jump", ActionType.JUMP))
                         .then(makeActionCommand("attack", ActionType.ATTACK))
-                        .then(makeActionCommand("drop", ActionType.DROP_ITEM))
-                        .then(makeDropCommand("drop", false))
-                        .then(makeActionCommand("dropStack", ActionType.DROP_STACK))
-                        .then(makeDropCommand("dropStack", true))
+                        .then(makeDropCommand("drop", ActionType.DROP_ITEM, false))
+                        .then(makeDropCommand("dropStack", ActionType.DROP_STACK, true))
                         .then(makeActionCommand("swapHands", ActionType.SWAP_HANDS))
                         .then(literal("hotbar")
                                 .then(argument("slot", IntegerArgumentType.integer(1, 9))
@@ -125,9 +123,14 @@ public class PlayerCommand
                         .executes(c -> manipulate(c, ap -> ap.start(type, Action.interval(IntegerArgumentType.getInteger(c, "ticks")))))));
     }
 
-    private static LiteralArgumentBuilder<CommandSourceStack> makeDropCommand(String actionName, boolean dropAll)
+    private static LiteralArgumentBuilder<CommandSourceStack> makeDropCommand(String actionName, ActionType type, boolean dropAll)
     {
         return literal(actionName)
+                .executes(manipulation(ap -> ap.start(type, Action.once())))
+                .then(literal("once").executes(manipulation(ap -> ap.start(type, Action.once()))))
+                .then(literal("continuous").executes(manipulation(ap -> ap.start(type, Action.continuous()))))
+                .then(literal("interval").then(argument("ticks", IntegerArgumentType.integer(1))
+                        .executes(c -> manipulate(c, ap -> ap.start(type, Action.interval(IntegerArgumentType.getInteger(c, "ticks")))))))
                 .then(literal("all").executes(manipulation(ap -> ap.drop(-2, dropAll))))
                 .then(literal("mainhand").executes(manipulation(ap -> ap.drop(-1, dropAll))))
                 .then(literal("offhand").executes(manipulation(ap -> ap.drop(40, dropAll))))

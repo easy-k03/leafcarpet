@@ -17,6 +17,7 @@ import carpet.commands.SpawnCommand;
 import carpet.commands.TestCommand;
 //import carpet.script.ScriptCommand;
 import carpet.network.ServerNetworkHandler;
+import carpet.helpers.EntityPlayerActionPack;
 import carpet.helpers.HopperCounter;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
@@ -137,6 +138,7 @@ public class CarpetServer
     {
         ServerNetworkHandler.onPlayerLoggedOut(player);
         LoggerRegistry.playerDisconnected(player);
+        EntityPlayerActionPack.remove(player);
         extensions.forEach(e -> e.onPlayerLoggedOut(player));
         if (scriptServer != null && !scriptServer.stopAll) {
             scriptServer.onPlayerLoggedOut(player, reason);

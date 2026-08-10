@@ -45,13 +45,19 @@ public class Translations
 
     public static Map<String, String> getTranslationFromResourcePath(String path)
     {
-        InputStream langFile = Translations.class.getClassLoader().getResourceAsStream(path);
-        if (langFile == null) {
+        try (InputStream langFile = Translations.class.getClassLoader().getResourceAsStream(path))
+        {
+            if (langFile == null) {
+                return Collections.emptyMap();
+            }
+            Gson gson = new GsonBuilder().setLenient().create();
+            return gson.fromJson(new InputStreamReader(langFile, StandardCharsets.UTF_8),
+                    new TypeToken<Map<String, String>>() {});
+        }
+        catch (java.io.IOException e)
+        {
             return Collections.emptyMap();
         }
-        Gson gson = new GsonBuilder().setLenient().create();
-        return gson.fromJson(new InputStreamReader(langFile, StandardCharsets.UTF_8),
-                new TypeToken<Map<String, String>>() {});
     }
 
     public static void updateLanguage()

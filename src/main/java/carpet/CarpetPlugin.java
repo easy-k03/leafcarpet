@@ -86,7 +86,8 @@ public class CarpetPlugin extends JavaPlugin implements Listener
     public void onPlayerKick(PlayerKickEvent event)
     {
         ServerPlayer player = PaperUtils.toServerPlayer(event.getPlayer());
-        if (player instanceof EntityPlayerMPFake && event.getReason().contains("PacketEvents")) {
+        String reason = event.getReason();
+        if (player instanceof EntityPlayerMPFake && reason != null && reason.contains("PacketEvents")) {
             event.setCancelled(true);
         }
     }

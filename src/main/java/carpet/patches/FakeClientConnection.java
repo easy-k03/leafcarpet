@@ -11,12 +11,17 @@ import net.minecraft.network.PacketListener;
 import net.minecraft.network.ProtocolInfo;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.ClientboundKeepAlivePacket;
+import net.minecraft.network.protocol.common.ServerCommonPacketListener;
+import net.minecraft.network.protocol.common.ServerboundKeepAlivePacket;
 import org.jspecify.annotations.Nullable;
 
 import java.net.InetSocketAddress;
 
 public class FakeClientConnection extends Connection
 {
+    private PacketListener fakePacketListener;
+
     public FakeClientConnection(PacketFlow p)
     {
         super(p);
@@ -39,6 +44,14 @@ public class FakeClientConnection extends Connection
     @Override
     public void send(Packet<?> packet, @Nullable ChannelFutureListener listener, boolean bl)
     {
+        if (packet instanceof ClientboundKeepAlivePacket keepAlive)
+        {
+            PacketListener pl = getPacketListener();
+            if (pl instanceof ServerCommonPacketListener common)
+            {
+                common.handleKeepAlive(new ServerboundKeepAlivePacket(keepAlive.getId()));
+            }
+        }
         if (listener != null) {
             try {
                 ChannelFuture future = this.channel.newSucceededFuture();
@@ -50,5 +63,13 @@ public class FakeClientConnection extends Connection
     @Override
     public <T extends PacketListener> void setupInboundProtocol(ProtocolInfo<T> protocolInfo, T packetListener)
     {
+        this.fakePacketListener = packetListener;
+    }
+
+    @Override
+    public PacketListener getPacketListener()
+    {
+        PacketListener pl = super.getPacketListener();
+        return pl != null ? pl : fakePacketListener;
     }
 }

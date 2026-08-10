@@ -39,7 +39,11 @@ public class CounterCommand
     private static int displayCounter(CommandSourceStack source, DyeColor color, boolean realtime)
     {
         HopperCounter counter = HopperCounter.getCounter(color);
-
+        if (counter == null)
+        {
+            Messenger.m(source, "r No counter for color " + color);
+            return 0;
+        }
         for (Component message: counter.format(source.getServer(), realtime, false))
         {
             source.sendSuccess(() -> message, false);
@@ -56,7 +60,13 @@ public class CounterCommand
 
     private static int resetCounter(CommandSourceStack source, DyeColor color)
     {
-        HopperCounter.getCounter(color).reset(source.getServer());
+        HopperCounter counter = HopperCounter.getCounter(color);
+        if (counter == null)
+        {
+            Messenger.m(source, "r No counter for color " + color);
+            return 0;
+        }
+        counter.reset(source.getServer());
         Messenger.m(source, "w Restarted " + color + " counter");
         return 1;
     }

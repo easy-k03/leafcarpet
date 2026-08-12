@@ -103,6 +103,9 @@ public class CarpetPlugin extends JavaPlugin implements Listener
     public void onPlayerQuit(PlayerQuitEvent event)
     {
         ServerPlayer player = PaperUtils.toServerPlayer(event.getPlayer());
+        if (player instanceof EntityPlayerMPFake && player.getVehicle() != null) {
+            player.stopRiding();
+        }
         Component reason = Component.literal("Player disconnected");
         CarpetServer.onPlayerLoggedOut(player, reason);
     }

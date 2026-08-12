@@ -117,6 +117,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     public void kill(Component reason)
     {
         shakeOff();
+        if (getVehicle() != null) stopRiding();
 
         if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
             this.connection.onDisconnect(new DisconnectionDetails(reason));

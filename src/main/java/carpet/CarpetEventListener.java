@@ -5,7 +5,6 @@ import carpet.helpers.HopperCounter;
 import carpet.utils.PaperUtils;
 import carpet.utils.SpawnReporter;
 import carpet.utils.WoolTool;
-import io.papermc.paper.event.block.HopperInventorySearchEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -33,6 +32,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
+import org.bukkit.event.inventory.HopperInventorySearchEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -211,9 +211,16 @@ public final class CarpetEventListener implements Listener
         Level level = nmsPlayer.level();
         BlockPos pos = PaperUtils.toBlockPos(event.getClickedBlock());
         BlockState state = level.getBlockState(pos);
-        Location clicked = event.getClickedPosition() == null
-                ? event.getClickedBlock().getLocation().add(0.5, 0.5, 0.5)
-                : event.getClickedPosition();
+        org.bukkit.util.Vector relative = event.getClickedPosition();
+        Location clicked = event.getClickedBlock().getLocation();
+        if (relative != null)
+        {
+            clicked.add(relative);
+        }
+        else
+        {
+            clicked.add(0.5, 0.5, 0.5);
+        }
         net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(
                 new Vec3(clicked.getX(), clicked.getY(), clicked.getZ()),
                 net.minecraft.core.Direction.UP, pos, false

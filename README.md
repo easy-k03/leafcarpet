@@ -12,14 +12,14 @@ This plugin ports [gnembon's fabric-carpet](https://github.com/gnembon/fabric-ca
 | **Server** | Leaf 1.21.11 |
 | **Java** | 21 |
 | **Plugin name** | `CarpetPlugin` |
-| **Build** | GitHub Actions (`Build` workflow) |
+| **Build** | GitHub Actions (`Build` + manual `Release`) |
 
 > This is an in-progress port. Commands, fake players, and the `/carpet` rule UI work. Many Fabric Carpet *rules* are listed for compatibility but have no gameplay effect yet, because they still need NMS hooks that Fabric implements with mixins. See [Status](#status).
 
 ## Install
 
 1. Run a [Leaf](https://www.leafmc.one/) 1.21.11 server (Java 21).
-2. Download `leafcarpet-1.0.0.jar` from the latest [GitHub Actions](https://github.com/easy-k03/leafcarpet/actions) `Build` run (artifact `leafcarpet`).
+2. Download `leafcarpet-1.0.0.jar` from the latest [GitHub Release](https://github.com/easy-k03/leafcarpet/releases). If no release exists yet, use the `leafcarpet` artifact from the latest [GitHub Actions](https://github.com/easy-k03/leafcarpet/actions/workflows/build.yml) `Build` run.
 3. Drop the jar into `plugins/`.
 4. Start the server. The plugin loads at `STARTUP`.
 
@@ -27,7 +27,9 @@ Works alongside ProtocolLib / PacketEvents. Fake-player shadow and disconnect ha
 
 ## Building
 
-**Canonical build is GitHub Actions.** The `Build` workflow compiles the plugin with Paperweight on Ubuntu. You do not need a mapped Leaf/Paper server jar in this repo, and you do not need to compile on your machine.
+**Canonical build is GitHub Actions.** Do not compile this plugin on a local machine unless you are iterating on source. The CI runners compile with Paperweight on Ubuntu. You do not need a mapped Leaf/Paper server jar in this repo.
+
+### Build (push / PR)
 
 Workflow: [`.github/workflows/build.yml`](.github/workflows/build.yml)
 
@@ -41,6 +43,29 @@ It:
 6. Uploads `build/libs/leafcarpet-*.jar` as the `leafcarpet` artifact
 
 Trigger it with a push to `main`/`master`, a pull request, or **Actions → Build → Run workflow**.
+
+### Release (manual only)
+
+Workflow: [`.github/workflows/release.yml`](.github/workflows/release.yml)
+
+This workflow **does not run on git push**. It only starts when you click **Actions → Release → Run workflow**.
+
+It reuses the same JDK 21 / Gradle / Paperweight build, then:
+
+1. Builds `leafcarpet-<version>.jar`
+2. Creates a Git tag (`v1.0.0` by default)
+3. Publishes a GitHub Release and attaches the jar
+
+When running the workflow you can set:
+
+| Input | Default | Meaning |
+|---|---|---|
+| `version` | Gradle version (`1.0.0`) | Jar version and `plugin.yml` version |
+| `tag` | `v<version>` | Git tag / GitHub Release tag |
+| `prerelease` | `false` | Mark the GitHub Release as a prerelease |
+| `notes` | empty | Extra text prepended to generated release notes |
+
+Leave `version` empty to use `1.0.0` from `build.gradle.kts`.
 
 The first CI run downloads the Paper 1.21.11 dev bundle and can take several minutes. Later runs reuse the Paperweight cache.
 

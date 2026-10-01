@@ -1,0 +1,178 @@
+name: Release
+
+# Manual only. Does not run on push or pull_request.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version (empty = Gradle version in build.gradle.kts)
+        required: false
+        type: string
+        default: ""
+      tag:
+        description: Git tag (empty = v<version>)
+        required: false
+        type: string
+        default: ""
+      prerelease:
+        description: Mark GitHub Release as prerelease
+        required: false
+        type: boolean
+        default: false
+      notes:
+        description: Extra release notes (GitHub also generates notes from commits)
+        required: false
+        type: string
+        default: ""
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Cache Paperweight
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches/paperweight
+            ~/.gradle/caches/paperweight-userdev
+          key: ${{ runner.os }}-paperweight-${{ hashFiles('build.gradle.kts', 'settings.gradle.kts', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-paperweight-
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Resolve version and tag
+        id: meta
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          set -euo pipefail
+
+          version="${INPUT_VERSION:-}"
+          version="${version#v}"
+          version="${version#"${version%%[![:space:]]*}"}"
+          version="${version%"${version##*[![:space:]]}"}"
+
+          if [[ -n "$version" && ! "$version" =~ ^[0-9A-Za-z._+-]+$ ]]; then
+            echo "Invalid version: $version"
+            exit 1
+          fi
+
+          if [[ -z "$version" ]]; then
+            version="$(python3 - <<'PY'
+from pathlib import Path
+import re
+text = Path("build.gradle.kts").read_text(encoding="utf-8")
+match = re.search(r'\?:\s*"([^"]+)"', text)
+if not match:
+    raise SystemExit("Could not parse default version from build.gradle.kts")
+print(match.group(1))
+PY
+)"
+            version="${version#v}"
+          fi
+
+          if [[ -z "$version" ]]; then
+            echo "Could not resolve a release version"
+            exit 1
+          fi
+
+          tag="${INPUT_TAG:-}"
+          tag="${tag#"${tag%%[![:space:]]*}"}"
+          tag="${tag%"${tag##*[![:space:]]}"}"
+          if [[ -z "$tag" ]]; then
+            tag="v${version}"
+          fi
+
+          if [[ ! "$tag" =~ ^[0-9A-Za-z._+-]+$ ]]; then
+            echo "Invalid tag: $tag"
+            exit 1
+          fi
+
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "Resolved version=${version} tag=${tag}"
+
+      - name: Build plugin
+        env:
+          PLUGIN_VERSION: ${{ steps.meta.outputs.version }}
+          GRADLE_OPTS: -Dorg.gradle.daemon=false -Dfile.encoding=UTF-8
+        run: ./gradlew build --stacktrace --no-daemon -PpluginVersion="${PLUGIN_VERSION}"
+
+      - name: List built jars
+        if: always()
+        run: ls -lh build/libs || true
+
+      - name: Resolve plugin jar
+        id: jar
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          candidates=()
+          for jar in build/libs/*.jar; do
+            base="$(basename "$jar")"
+            case "$base" in
+              *-sources.jar|*-javadoc.jar|*-dev*.jar|*-plain.jar|*-reobf.jar) continue ;;
+            esac
+            candidates+=("$jar")
+          done
+          if [[ ${#candidates[@]} -ne 1 ]]; then
+            echo "Expected exactly one plugin jar, found ${#candidates[@]}:"
+            printf '  %s\n' "${candidates[@]:-}"
+            exit 1
+          fi
+          echo "path=${candidates[0]}" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "${candidates[0]}")" >> "$GITHUB_OUTPUT"
+
+      - name: Upload plugin jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: leafcarpet
+          if-no-files-found: error
+          retention-days: 30
+          path: ${{ steps.jar.outputs.path }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: leafcarpet ${{ steps.meta.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease }}
+          make_latest: ${{ github.event.inputs.prerelease != 'true' }}
+          generate_release_notes: true
+          body: ${{ github.event.inputs.notes }}
+          files: ${{ steps.jar.outputs.path }}
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

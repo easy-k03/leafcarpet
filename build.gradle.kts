@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "carpet"
-version = "1.0.0"
+version = (findProperty("pluginVersion") as String?)?.trim()?.takeIf { it.isNotEmpty() } ?: "1.0.0"
 description = "Carpet Mod ported to Leaf"
 
 java {

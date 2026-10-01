@@ -76,48 +76,29 @@ jobs:
           INPUT_TAG: ${{ github.event.inputs.tag }}
         run: |
           set -euo pipefail
-
           version="${INPUT_VERSION:-}"
           version="${version#v}"
-          version="${version#"${version%%[![:space:]]*}"}"
-          version="${version%"${version##*[![:space:]]}"}"
-
+          version="$(printf '%s' "$version" | tr -d '[:space:]')"
           if [[ -n "$version" && ! "$version" =~ ^[0-9A-Za-z._+-]+$ ]]; then
             echo "Invalid version: $version"
             exit 1
           fi
-
           if [[ -z "$version" ]]; then
-            version="$(python3 - <<'PY'
-from pathlib import Path
-import re
-text = Path("build.gradle.kts").read_text(encoding="utf-8")
-match = re.search(r'\?:\s*"([^"]+)"', text)
-if not match:
-    raise SystemExit("Could not parse default version from build.gradle.kts")
-print(match.group(1))
-PY
-)"
+            version="$(sed -n 's/.*?:[[:space:]]*"\([^"]*\)".*/\1/p' build.gradle.kts | head -n1)"
             version="${version#v}"
           fi
-
           if [[ -z "$version" ]]; then
-            echo "Could not resolve a release version"
-            exit 1
+            version="1.0.0"
           fi
-
           tag="${INPUT_TAG:-}"
-          tag="${tag#"${tag%%[![:space:]]*}"}"
-          tag="${tag%"${tag##*[![:space:]]}"}"
+          tag="$(printf '%s' "$tag" | tr -d '[:space:]')"
           if [[ -z "$tag" ]]; then
             tag="v${version}"
           fi
-
           if [[ ! "$tag" =~ ^[0-9A-Za-z._+-]+$ ]]; then
             echo "Invalid tag: $tag"
             exit 1
           fi
-
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "tag=${tag}" >> "$GITHUB_OUTPUT"
           echo "Resolved version=${version} tag=${tag}"

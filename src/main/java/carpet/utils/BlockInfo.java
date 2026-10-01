@@ -3,7 +3,6 @@ package carpet.utils;
 import java.util.ArrayList;
 import java.util.List;
 
-import carpet.script.utils.Colors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
@@ -38,8 +37,8 @@ public class BlockInfo
         lst.add(Messenger.s(""));
         lst.add(Messenger.s("====================================="));
         lst.add(Messenger.s(String.format("Block info for %s%s (id %d%s):", blocks.getKey(block),metastring, blocks.getId(block), metastring )));
-        lst.add(Messenger.s(String.format(" - Map colour: %s", Colors.mapColourName.get(state.getMapColor(world, pos)))));
-        lst.add(Messenger.s(String.format(" - Sound type: %s", Colors.soundName.get(state.getSoundType()))));
+        lst.add(Messenger.s(String.format(" - Map colour: %s", describeMapColor(state.getMapColor(world, pos)))));
+        lst.add(Messenger.s(String.format(" - Sound type: %s", describeSoundType(state.getSoundType()))));
         lst.add(Messenger.s(""));
         lst.add(Messenger.s(String.format(" - Full block: %s", state.isCollisionShapeFullBlock(world, pos))));
         lst.add(Messenger.s(String.format(" - Normal cube: %s", state.isRedstoneConductor(world, pos))));
@@ -67,6 +66,16 @@ public class BlockInfo
         lst.add(wander_chances(pos.above(), world));
 
         return lst;
+    }
+
+    private static String describeMapColor(net.minecraft.world.level.material.MapColor color)
+    {
+        return color == null ? "unknown" : Integer.toString(color.id);
+    }
+
+    private static String describeSoundType(net.minecraft.world.level.block.SoundType soundType)
+    {
+        return soundType == null ? "unknown" : soundType.toString();
     }
 
     private static Component wander_chances(BlockPos pos, ServerLevel worldIn)

@@ -1,14 +1,19 @@
 package carpet.utils;
 
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.craftbukkit.entity.CraftEntity;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
-
-import java.lang.reflect.InvocationTargetException;
+import org.bukkit.inventory.ItemStack;
 
 public final class PaperUtils
 {
@@ -16,19 +21,25 @@ public final class PaperUtils
 
     public static MinecraftServer getMinecraftServer()
     {
-        try {
+        try
+        {
             Object craftServer = Bukkit.getServer();
             return (MinecraftServer) craftServer.getClass().getMethod("getServer").invoke(craftServer);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get MinecraftServer", e);
+        }
+        catch (Exception e)
+        {
+            return null;
         }
     }
 
     public static ServerPlayer toServerPlayer(Player player)
     {
-        try {
+        try
+        {
             return (ServerPlayer) player.getClass().getMethod("getHandle").invoke(player);
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             throw new RuntimeException("Failed to get ServerPlayer", e);
         }
     }
@@ -38,15 +49,37 @@ public final class PaperUtils
         return (Player) player.getBukkitEntity();
     }
 
+    public static Entity toNmsEntity(org.bukkit.entity.Entity entity)
+    {
+        return ((CraftEntity) entity).getHandle();
+    }
+
+    public static ServerLevel toServerLevel(World world)
+    {
+        return ((CraftWorld) world).getHandle();
+    }
+
+    public static net.minecraft.world.item.ItemStack toNmsItem(ItemStack stack)
+    {
+        return CraftItemStack.asNMSCopy(stack);
+    }
+
+    public static BlockPos toBlockPos(org.bukkit.block.Block block)
+    {
+        return new BlockPos(block.getX(), block.getY(), block.getZ());
+    }
+
     public static CommandSourceStack createCommandSourceStack(CommandSender sender)
     {
-        if (sender instanceof Player)
+        if (sender instanceof Player player)
         {
-            return toServerPlayer((Player) sender).createCommandSourceStack();
+            return toServerPlayer(player).createCommandSourceStack();
         }
-        else
+        MinecraftServer server = getMinecraftServer();
+        if (server == null)
         {
-            return getMinecraftServer().createCommandSourceStack();
+            throw new IllegalStateException("MinecraftServer is not available");
         }
+        return server.createCommandSourceStack();
     }
 }

@@ -4,7 +4,6 @@ import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleCategory;
 import carpet.api.settings.Validators;
 import carpet.api.settings.Validator;
-import carpet.script.utils.AppStoreManager;
 import carpet.settings.Rule;
 import carpet.utils.Translations;
 import carpet.utils.CommandHelper;
@@ -487,40 +486,14 @@ public class CarpetSettings
     )
     public static boolean scriptsOptimization = true;
 
-    private static class ScarpetAppStore extends Validator<String> {
-        @Override
-        public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String stringInput) {
-            if (newValue.equals(currentRule.value())) {
-                return newValue;
-            }
-            if (newValue.equals("none")) {
-                AppStoreManager.setScarpetRepoLink(null);
-            } else {
-                if (newValue.endsWith("/"))
-                    newValue = newValue.substring(0, newValue.length() - 1);
-                AppStoreManager.setScarpetRepoLink("https://api.github.com/repos/" + newValue + "/");
-            }
-            if (source != null)
-                CommandHelper.notifyPlayersCommandsChanged(source.getServer());
-            return newValue;
-        }
-
-        @Override
-        public String description() {
-            return "Appstore link should point to a valid github repository";
-        }
-    }
-
     @Rule(
             desc = "Location of the online repository of scarpet apps",
             extra = {
-                    "set to 'none' to disable.",
-                    "Point to any github repo with scarpet apps",
-                    "using <user>/<repo>/contents/<path...>"
+                    "Unused in this port: Scarpet is not registered.",
+                    "Kept so existing carpet.conf files still load."
             },
             category = SCARPET,
-            strict = false,
-            validate = ScarpetAppStore.class
+            strict = false
     )
     public static String scriptsAppStore = "gnembon/scarpet/contents/programs";
 

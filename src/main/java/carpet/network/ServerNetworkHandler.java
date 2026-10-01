@@ -4,7 +4,6 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleHelper;
-import carpet.script.utils.SnoopyCommandSource;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -82,7 +81,7 @@ public class ServerNetworkHandler
         else
         {
             player.level().getServer().getCommands().performPrefixedCommand(
-                    new SnoopyCommandSource(player, error, output, returnValue), command
+                    player.createCommandSourceStack(), command
             );
         }
         CompoundTag result = new CompoundTag();

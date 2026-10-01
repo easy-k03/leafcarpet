@@ -4,7 +4,6 @@ import carpet.helpers.EntityPlayerActionPack;
 import carpet.helpers.EntityPlayerActionPack.Action;
 import carpet.helpers.EntityPlayerActionPack.ActionType;
 import carpet.CarpetSettings;
-import carpet.fakes.ServerPlayerInterface;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;

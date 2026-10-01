@@ -18,7 +18,7 @@ import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class CarpetPlugin extends JavaPlugin implements Listener
+public final class CarpetPlugin extends JavaPlugin implements Listener
 {
     public static CarpetPlugin pluginInstance;
 
@@ -29,6 +29,7 @@ public class CarpetPlugin extends JavaPlugin implements Listener
     public void onEnable()
     {
         pluginInstance = this;
+        getDataFolder().mkdirs();
         CarpetServer.onGameStarted();
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(new CarpetEventListener(this), this);
@@ -43,21 +44,33 @@ public class CarpetPlugin extends JavaPlugin implements Listener
             CarpetServer.onServerClosed(server);
             CarpetServer.onServerDoneClosing(server);
         }
+        pluginInstance = null;
     }
 
     @EventHandler
     public void onServerLoad(ServerLoadEvent event)
     {
-        if (serverLoadComplete) return;
+        if (serverLoadComplete)
+        {
+            return;
+        }
         serverLoadComplete = true;
 
         MinecraftServer server = PaperUtils.getMinecraftServer();
+        if (server == null)
+        {
+            getLogger().severe("MinecraftServer is not available; CarpetPlugin cannot start.");
+            return;
+        }
         CarpetServer.onServerLoaded(server);
-
         CarpetServer.registerCarpetCommands(server.getCommands().getDispatcher());
 
         Bukkit.getScheduler().runTaskTimer(this, () -> {
-            CarpetServer.tick(PaperUtils.getMinecraftServer());
+            MinecraftServer ticking = PaperUtils.getMinecraftServer();
+            if (ticking != null)
+            {
+                CarpetServer.tick(ticking);
+            }
         }, 1L, 1L);
     }
 
@@ -65,10 +78,16 @@ public class CarpetPlugin extends JavaPlugin implements Listener
     public void onServerTickEnd(ServerTickEndEvent event)
     {
         MinecraftServer server = PaperUtils.getMinecraftServer();
-        if (server == null) return;
+        if (server == null)
+        {
+            return;
+        }
         for (ServerPlayer player : server.getPlayerList().getPlayers())
         {
-            if (player instanceof EntityPlayerMPFake) continue;
+            if (player instanceof EntityPlayerMPFake)
+            {
+                continue;
+            }
             EntityPlayerActionPack.get(player).onUpdate();
         }
     }
@@ -76,10 +95,16 @@ public class CarpetPlugin extends JavaPlugin implements Listener
     @EventHandler
     public void onWorldLoad(WorldLoadEvent event)
     {
-        if (worldsLoaded) return;
+        if (worldsLoaded)
+        {
+            return;
+        }
         worldsLoaded = true;
-
-        CarpetServer.onServerLoadedWorlds(PaperUtils.getMinecraftServer());
+        MinecraftServer server = PaperUtils.getMinecraftServer();
+        if (server != null)
+        {
+            CarpetServer.onServerLoadedWorlds(server);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -87,7 +112,8 @@ public class CarpetPlugin extends JavaPlugin implements Listener
     {
         ServerPlayer player = PaperUtils.toServerPlayer(event.getPlayer());
         String reason = event.getReason();
-        if (player instanceof EntityPlayerMPFake && reason != null && reason.contains("PacketEvents")) {
+        if (player instanceof EntityPlayerMPFake && reason != null && reason.contains("PacketEvents"))
+        {
             event.setCancelled(true);
         }
     }
@@ -95,18 +121,17 @@ public class CarpetPlugin extends JavaPlugin implements Listener
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event)
     {
-        ServerPlayer player = PaperUtils.toServerPlayer(event.getPlayer());
-        CarpetServer.onPlayerLoggedIn(player);
+        CarpetServer.onPlayerLoggedIn(PaperUtils.toServerPlayer(event.getPlayer()));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event)
     {
         ServerPlayer player = PaperUtils.toServerPlayer(event.getPlayer());
-        if (player instanceof EntityPlayerMPFake && player.getVehicle() != null) {
+        if (player instanceof EntityPlayerMPFake && player.getVehicle() != null)
+        {
             player.stopRiding();
         }
-        Component reason = Component.literal("Player disconnected");
-        CarpetServer.onPlayerLoggedOut(player, reason);
+        CarpetServer.onPlayerLoggedOut(player, Component.literal("Player disconnected"));
     }
 }

@@ -2,7 +2,6 @@ package carpet.network;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
-import carpet.script.utils.ShapesRenderer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -39,8 +38,6 @@ public class CarpetClient
 
     public static final String HI = "69";
     public static final String HELLO = "420";
-
-    public static ShapesRenderer shapes = null;
 
     private static ServerPlayer clientPlayer = null;
     private static boolean isServerCarpet = false;

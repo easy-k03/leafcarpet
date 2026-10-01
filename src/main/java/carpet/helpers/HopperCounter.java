@@ -1,12 +1,10 @@
 package carpet.helpers;
 
 import carpet.CarpetServer;
-import carpet.script.utils.RecipeHelper;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
@@ -22,8 +20,6 @@ import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractBannerBlock;
 import net.minecraft.world.level.block.BeaconBeamBlock;
@@ -37,7 +33,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
@@ -411,25 +406,7 @@ public class HopperCounter
             return WHITE;
         }
 
-        Identifier id = registryAccess.lookupOrThrow(Registries.ITEM).getKey(item);
-        if (id == null)
-        {
-            return null;
-        }
-
-        for (Recipe<?> r : RecipeHelper.getRecipesForOutput(CarpetServer.minecraft_server.getRecipeManager(), id, level))
-        {
-            for (Ingredient ingredient : r.placementInfo().ingredients())
-            {
-                Optional<Holder<Item>> match = ingredient.items().filter(stack -> fromItem(stack.value(), registryAccess) != null).findFirst();
-                if (match.isPresent())
-                {
-                    return fromItem(match.get().value(), registryAccess);
-                }
-            }
-        }
-
-        return null;
+        return WHITE;
     }
 
     /**

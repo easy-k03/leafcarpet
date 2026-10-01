@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import carpet.CarpetPlugin;
-import carpet.script.Expression;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -289,25 +288,12 @@ public class SettingsManager {
      * <p>This is handled automatically by Carpet and calling it is not supported.</p>
      */
     public void initializeScarpetRules() {
-        for (CarpetRule<?> rule : rules.values())
-        {
-            if (rule instanceof ParsedRule<?> pr && !pr.scarpetApp.isEmpty()) {
-                switchScarpetRuleIfNeeded(server.createCommandSourceStack(), pr);
-            }
-        }
+        // Scarpet is not registered in this Bukkit port.
     }
 
     private void switchScarpetRuleIfNeeded(CommandSourceStack source, CarpetRule<?> carpetRule)
     {
-        if (carpetRule instanceof ParsedRule<?> rule && !rule.scarpetApp.isEmpty() && CarpetServer.scriptServer != null)
-        {
-            if (RuleHelper.getBooleanValue(rule) || (rule.type() == String.class && !rule.value().equals("false")))
-            {
-                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, s -> CommandHelper.canUseCommand(s, rule.value()), false, false, true, null, Expression.LoadOverride.DEFAULT);
-            } else {
-                CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false, true);
-            }
-        }
+        // Scarpet apps are not loaded in this Bukkit port.
     }
 
     private Path getFile()

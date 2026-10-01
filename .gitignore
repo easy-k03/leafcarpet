@@ -1,0 +1,34 @@
+# Gradle
+.gradle/
+build/
+out/
+bin/
+
+# Paperweight / Minecraft caches in the repo
+.paperweight/
+run/
+logs/
+
+# Local server jars must never be a build input
+libs/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Java
+*.class
+hs_err_pid*
+replay_pid*

@@ -44,7 +44,7 @@ Trigger it with a push to `main`/`master`, a pull request, or **Actions → Buil
 
 The first CI run downloads the Paper 1.21.11 dev bundle and can take several minutes. Later runs reuse the Paperweight cache.
 
-The plugin is compiled against `paperDevBundle("1.21.11-R0.1-SNAPSHOT")` with Mojang mappings (`paperweight-userdev` 2.0.0-beta.24). Leaf/Paper 1.21.11 is Mojang-mapped at runtime, so the plugin jar is **not** reobfuscated. Do not commit `libs/`, `.gradle/`, or `build/`.
+The plugin is compiled against `paperDevBundle("1.21.11-R0.1-SNAPSHOT")` with Mojang mappings (`paperweight-userdev` 2.0.0-beta.24). That plugin requires Gradle 9.7.1 or newer; this repo ships the Gradle **9.8.0** wrapper. Leaf/Paper 1.21.11 is Mojang-mapped at runtime, so the plugin jar is **not** reobfuscated. Do not commit `libs/`, `.gradle/`, or `build/`.
 
 ### Local compile (contributors only)
 
